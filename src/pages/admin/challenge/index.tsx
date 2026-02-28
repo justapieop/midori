@@ -25,6 +25,7 @@ export default function AdminChallengePage(): JSX.Element {
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState<DTOCreateChallenge>(emptyForm());
     const [errors, setErrors] = useState<Partial<Record<keyof DTOCreateChallenge, string>>>({});
+    const [viewChallenge, setViewChallenge] = useState<Challenge | null>(null);
 
     function validate(): boolean {
         const e: Partial<Record<keyof DTOCreateChallenge, string>> = {};
@@ -310,15 +311,81 @@ export default function AdminChallengePage(): JSX.Element {
                                 cursor="pointer"
                                 _hover={{ boxShadow: "md", borderColor: "green.300" }}
                                 transition="all 0.15s"
+                                onClick={() => setViewChallenge(challenge)}
                             >
                                 <Text fontWeight="semibold" color="gray.800" fontSize="sm">
                                     {challenge.title}
+                                </Text>
+                                <Text color="gray.500" fontSize="xs" mt={1} lineClamp={2}>
+                                    {challenge.description}
                                 </Text>
                             </Box>
                         ))}
                     </Grid>
                 )}
             </Box>
+
+            {/* View challenge modal */}
+            <Dialog.Root open={!!viewChallenge} onOpenChange={(e) => { if (!e.open) setViewChallenge(null); }}>
+                <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                        <Dialog.Content borderRadius="xl" p={6} maxW="480px" w="full" bg="white">
+                            <Flex justify="space-between" align="center" mb={4}>
+                                <Dialog.Title>
+                                    <Heading size="md" color="gray.800">Chi tiết thử thách</Heading>
+                                </Dialog.Title>
+                                <Dialog.CloseTrigger asChild>
+                                    <IconButton aria-label="Đóng" variant="ghost" size="sm">
+                                        <LuX />
+                                    </IconButton>
+                                </Dialog.CloseTrigger>
+                            </Flex>
+                            <Dialog.Body px={0}>
+                                {viewChallenge && (
+                                    <Flex direction="column" gap={4}>
+                                        <Field.Root>
+                                            <Field.Label fontSize="sm" color="gray.700">Tiêu đề</Field.Label>
+                                            <Input size="sm" value={viewChallenge.title} readOnly color="black" bg="gray.50" />
+                                        </Field.Root>
+                                        <Field.Root>
+                                            <Field.Label fontSize="sm" color="gray.700">Mô tả</Field.Label>
+                                            <Textarea size="sm" value={viewChallenge.description} readOnly color="black" bg="gray.50" rows={3} />
+                                        </Field.Root>
+                                        <Field.Root>
+                                            <Field.Label fontSize="sm" color="gray.700">Hướng dẫn</Field.Label>
+                                            <Textarea size="sm" value={viewChallenge.instruction} readOnly color="black" bg="gray.50" rows={3} />
+                                        </Field.Root>
+                                        <Flex gap={4}>
+                                            <Field.Root flex={1}>
+                                                <Field.Label fontSize="sm" color="gray.700">Điểm thưởng</Field.Label>
+                                                <Input size="sm" value={viewChallenge.points} readOnly color="black" bg="gray.50" />
+                                            </Field.Root>
+                                            <Field.Root flex={1}>
+                                                <Field.Label fontSize="sm" color="gray.700">Thời lượng (ngày)</Field.Label>
+                                                <Input size="sm" value={viewChallenge.duration} readOnly color="black" bg="gray.50" />
+                                            </Field.Root>
+                                        </Flex>
+                                        <Flex gap={4}>
+                                            <Field.Root flex={1}>
+                                                <Field.Label fontSize="sm" color="gray.700">Ngày bắt đầu</Field.Label>
+                                                <Input size="sm" value={new Date(viewChallenge.starts_at).toLocaleString("vi-VN")} readOnly color="black" bg="gray.50" />
+                                            </Field.Root>
+                                            <Field.Root flex={1}>
+                                                <Field.Label fontSize="sm" color="gray.700">Ngày kết thúc</Field.Label>
+                                                <Input size="sm" value={new Date(viewChallenge.ends_at).toLocaleString("vi-VN")} readOnly color="black" bg="gray.50" />
+                                            </Field.Root>
+                                        </Flex>
+                                    </Flex>
+                                )}
+                            </Dialog.Body>
+                            <Flex justify="flex-end" mt={6}>
+                                <Button size="sm" variant="ghost" color="gray.600" onClick={() => setViewChallenge(null)}>Đóng</Button>
+                            </Flex>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
         </Box>
     );
 }
