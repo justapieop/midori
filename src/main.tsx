@@ -2,6 +2,7 @@ import { Routes } from "@generouted/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "./components/ui/provider";
+import { Toaster } from "./components/ui/toaster";
 import authgear from "@authgear/web";
 import { CookiesProvider } from "react-cookie";
 
@@ -19,6 +20,7 @@ async function init(): Promise<void> {
       <StrictMode>
         <Provider>
           <CookiesProvider>
+            <Toaster />
             <Routes />
           </CookiesProvider>
         </Provider>

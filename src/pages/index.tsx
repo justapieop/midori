@@ -7,6 +7,7 @@ import authgear from "@authgear/web";
 import { createRoot } from "react-dom/client";
 import MapMarker from "@/components/maps/MapMarker";
 import PinOverlay from "@/components/maps/PinOverlay";
+import Navbar, { NAVBAR_HEIGHT } from "@/components/Navbar";
 import { Provider } from "@/components/ui/provider";
 import { fetchAllPins, fetchAllPinTypes } from "@/api";
 import type { Pin as PinData, PinType } from "@/api/pin";
@@ -18,7 +19,7 @@ function iconToDataUrl(icon: number[]): string {
 }
 
 export default function Home(): JSX.Element {
-    const [cookies, setCookie] = useCookies(["access-token"]);
+    const [_, setCookie] = useCookies(["access-token"]);
     const [selectedPin, setSelectedPin] = useState<PinData | null>(null);
     const setSelectedPinRef = useRef(setSelectedPin);
     setSelectedPinRef.current = setSelectedPin;
@@ -83,7 +84,17 @@ export default function Home(): JSX.Element {
 
     return (
         <>
-            <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />
+            <Navbar />
+            <div
+                ref={mapContainer}
+                style={{
+                    position: "fixed",
+                    top: NAVBAR_HEIGHT,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                }}
+            />
             {selectedPin && (
                 <PinOverlay pin={selectedPin} onClose={() => setSelectedPin(null)} />
             )}
