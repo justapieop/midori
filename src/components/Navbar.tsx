@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton, Popover, Button, Image, Text, Separator } from "@chakra-ui/react";
-import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser } from "react-icons/lu";
+import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser, LuTrophy } from "react-icons/lu";
 import authgear, { SessionState, type WebContainer, type SessionStateChangeReason } from "@authgear/web";
 import { useState, useEffect } from "react";
 import { fetchUserProfile } from "@/api/user";
@@ -89,6 +89,19 @@ export default function Navbar() {
                     >
                         <LuMap />
                         Bản đồ
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        color="white"
+                        _hover={{ bg: "transparent" }}
+                        _active={{ bg: "transparent" }}
+                        onClick={() => window.location.href = "/challenge"}
+                        gap={2}
+                        display={isAuthenticated ? undefined : "none"}
+                    >
+                        <LuTrophy />
+                        Thử thách
                     </Button>
                 </Flex>
 

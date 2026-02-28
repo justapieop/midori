@@ -7,6 +7,9 @@ const CHALLENGE_ADMIN_API_ENDPOINT: string = appendPath(BASE_URL, "/admin/challe
 export async function getAllChallenges(): Promise<Challenge[]> {
     const challenges: Challenge[] = await (await fetch(CHALLENGE_API_ENDPOINT, {
         method: "GET",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
     })).json();
 
     return challenges;
@@ -33,6 +36,33 @@ export async function deleteChallenge(id: string): Promise<void> {
         headers: {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
+    });
+}
+
+export async function enrollChallenge(id: string) {
+    const enrollEndpoint: string = appendPath(CHALLENGE_API_ENDPOINT, `/${id}`);
+
+    await fetch(enrollEndpoint, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+    });
+}
+
+export async function uploadChallenge(id: string, file: File): Promise<void> {
+    const uploadEndpoint: string = appendPath(CHALLENGE_API_ENDPOINT, `/${id}`);
+
+    const formData: FormData = new FormData();
+
+    formData.append("attachment", file);
+
+    await fetch(uploadEndpoint, {
+        method: "PUT",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+        body: formData,
     });
 }
 
