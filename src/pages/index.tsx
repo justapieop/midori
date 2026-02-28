@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type { JSX } from "react";
 import { Map as VietmapMap, NavigationControl, Marker } from "@vietmap/vietmap-gl-js/dist/vietmap-gl.js";
 import "@vietmap/vietmap-gl-js/dist/vietmap-gl.css";
-import { useCookies } from "react-cookie";
-import authgear from "@authgear/web";
 import { createRoot } from "react-dom/client";
 import MapMarker from "@/components/maps/MapMarker";
 import PinOverlay from "@/components/maps/PinOverlay";
@@ -19,17 +17,9 @@ function iconToDataUrl(icon: number[]): string {
 }
 
 export default function Home(): JSX.Element {
-    const [_, setCookie] = useCookies(["access-token"]);
     const [selectedPin, setSelectedPin] = useState<PinData | null>(null);
     const setSelectedPinRef = useRef(setSelectedPin);
     setSelectedPinRef.current = setSelectedPin;
-
-    useEffect(() => {
-        setCookie("access-token", authgear.accessToken, {
-            httpOnly: true,
-            secure: true
-        });
-    }, []);
 
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<VietmapMap | null>(null);

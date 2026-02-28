@@ -1,0 +1,49 @@
+import { appendPath, BASE_URL } from "./utils";
+import authgear from "@authgear/web";
+
+const CHALLENGE_API_ENDPOINT: string = appendPath(BASE_URL, "/challenge");
+const CHALLENGE_ADMIN_API_ENDPOINT: string = appendPath(BASE_URL, "/admin/challenge");
+
+export async function getAllChallenges(): Promise<Challenge[]> {
+    const challenges: Challenge[] = await (await fetch(CHALLENGE_API_ENDPOINT, {
+        method: "GET",
+    })).json();
+
+    return challenges;
+}
+
+export async function createChallenge(data: DTOCreateChallenge): Promise<Challenge> {
+    const challenge: Challenge = await (await fetch(CHALLENGE_ADMIN_API_ENDPOINT, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data)
+    })).json();
+
+    return challenge;
+}
+
+export interface Challenge {
+    id: string;
+    title: string;
+    description: string;
+    instruction: string;
+    created_at: Date;
+    updated_at: Date;
+    starts_at: Date;
+    ends_at: Date;
+    points: number;
+    duration: number;
+}
+
+export interface DTOCreateChallenge {
+    title: string;
+    description: string;
+    instruction: string;
+    starts_at: string;
+    ends_at: string;
+    points: number;
+    duration: number;
+}

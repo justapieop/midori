@@ -1,0 +1,324 @@
+import { useEffect, useState } from "react";
+import type { JSX } from "react";
+import { Box, Button, Dialog, Field, Flex, Grid, Heading, IconButton, Input, NumberInput, Portal, Skeleton, Text, Textarea } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { LuArrowLeft, LuPlus, LuX } from "react-icons/lu";
+import { getAllChallenges, createChallenge } from "@/api/challenge";
+import type { Challenge, DTOCreateChallenge } from "@/api/challenge";
+import { toaster } from "@/components/ui/toaster";
+
+const emptyForm = (): DTOCreateChallenge => ({
+    title: "",
+    description: "",
+    instruction: "",
+    starts_at: "",
+    ends_at: "",
+    points: 0,
+    duration: 0,
+});
+
+export default function AdminChallengePage(): JSX.Element {
+    const navigate = useNavigate();
+    const [challenges, setChallenges] = useState<Challenge[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [form, setForm] = useState<DTOCreateChallenge>(emptyForm());
+    const [errors, setErrors] = useState<Partial<Record<keyof DTOCreateChallenge, string>>>({});
+
+    function validate(): boolean {
+        const e: Partial<Record<keyof DTOCreateChallenge, string>> = {};
+        if (!form.title.trim()) e.title = "Vui lòng nhập tiêu đề.";
+        else if (form.title.length > 256) e.title = "Tiêu đề không được vượt quá 256 ký tự.";
+        if (!form.description.trim()) e.description = "Vui lòng nhập mô tả.";
+        if (!form.instruction.trim()) e.instruction = "Vui lòng nhập hướng dẫn.";
+        const now = new Date();
+        const startsAt = new Date(form.starts_at);
+        const endsAt = new Date(form.ends_at);
+        if (!form.starts_at || isNaN(startsAt.getTime())) e.starts_at = "Vui lòng chọn ngày bắt đầu.";
+        else if (startsAt < now) e.starts_at = "Ngày bắt đầu không được sớm hơn hiện tại.";
+        if (!form.ends_at || isNaN(endsAt.getTime())) e.ends_at = "Vui lòng chọn ngày kết thúc.";
+        else if (!e.starts_at && endsAt <= startsAt) e.ends_at = "Ngày kết thúc phải sau ngày bắt đầu.";
+        if (form.points <= 0) e.points = "Điểm thưởng phải lớn hơn 0.";
+        if (form.duration <= 0) e.duration = "Thời lượng phải lớn hơn 0.";
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    }
+
+    useEffect(() => {
+        getAllChallenges()
+            .then(setChallenges)
+            .finally(() => setLoading(false));
+    }, []);
+
+    function handleField<K extends keyof DTOCreateChallenge>(key: K, value: DTOCreateChallenge[K]) {
+        setForm((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+
+    function handleDateField(key: "starts_at" | "ends_at", raw: string) {
+        if (!raw) return;
+        const date = new Date(raw);
+        if (isNaN(date.getTime())) {
+            toaster.create({ title: "Ngày không hợp lệ.", type: "error", duration: 3000 });
+            return;
+        }
+        handleField(key, date.toISOString());
+    }
+
+    async function handleSave() {
+        if (!validate()) return;
+        console.log("Creating challenge:", form);
+        setSaving(true);
+        const toastId = toaster.create({
+            title: "Đang lưu thử thách...",
+            type: "loading",
+        });
+        try {
+            const created = await createChallenge(form);
+            setChallenges((prev) => [...prev, created]);
+            setModalOpen(false);
+            setForm(emptyForm());
+            setErrors({});
+            toaster.update(toastId, {
+                title: "Tạo thử thách thành công!",
+                type: "success",
+                duration: 3000,
+            });
+        } catch {
+            toaster.update(toastId, {
+                title: "Tạo thử thách thất bại.",
+                description: "Vui lòng thử lại.",
+                type: "error",
+                duration: 4000,
+            });
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    return (
+        <Box minH="100vh" bg="gray.50">
+            <Box
+                pt="2rem"
+                px={{ base: 4, md: 8 }}
+                maxW="1200px"
+                mx="auto"
+            >
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    color="gray.600"
+                    _hover={{ bg: "gray.100" }}
+                    mb={6}
+                    gap={2}
+                    onClick={() => navigate("/admin")}
+                >
+                    <LuArrowLeft />
+                    Quản trị
+                </Button>
+
+                <Flex align="center" justify="space-between" mb={6}>
+                    <Heading size="lg" color="gray.800">
+                        Quản lý thử thách
+                    </Heading>
+                    <Button
+                        size="sm"
+                        bg="green.600"
+                        color="white"
+                        _hover={{ bg: "green.700" }}
+                        gap={2}
+                        onClick={() => setModalOpen(true)}
+                    >
+                        <LuPlus />
+                        Thêm thử thách
+                    </Button>
+                </Flex>
+
+                <Dialog.Root open={modalOpen} onOpenChange={(e) => { if (saving) return; setModalOpen(e.open); if (!e.open) { setForm(emptyForm()); setErrors({}); } }}>
+                    <Portal>
+                        <Dialog.Backdrop />
+                        <Dialog.Positioner>
+                            <Dialog.Content borderRadius="xl" p={6} maxW="480px" w="full" bg="white" position="relative">
+                                {saving && (
+                                    <Box
+                                        position="absolute"
+                                        inset={0}
+                                        bg="whiteAlpha.700"
+                                        borderRadius="xl"
+                                        zIndex={10}
+                                        cursor="not-allowed"
+                                    />
+                                )}
+                                <Flex justify="space-between" align="center" mb={4}>
+                                    <Dialog.Title>
+                                        <Heading size="md" color="gray.800">Thêm thử thách</Heading>
+                                    </Dialog.Title>
+                                    <Dialog.CloseTrigger asChild>
+                                        <IconButton aria-label="Đóng" variant="ghost" size="sm" disabled={saving}>
+                                            <LuX />
+                                        </IconButton>
+                                    </Dialog.CloseTrigger>
+                                </Flex>
+                                <Dialog.Body px={0}>
+                                    <Flex direction="column" gap={4}>
+                                        <Field.Root required invalid={!!errors.title}>
+                                            <Field.Label fontSize="sm" color="gray.700">Tiêu đề</Field.Label>
+                                            <Input
+                                                size="sm"
+                                                placeholder="Tên thử thách"
+                                                value={form.title}
+                                                color="black"
+                                                _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }}
+                                                onChange={(e) => handleField("title", e.target.value)}
+                                            />
+                                            {errors.title && <Field.ErrorText>{errors.title}</Field.ErrorText>}
+                                        </Field.Root>
+
+                                        <Field.Root required invalid={!!errors.description}>
+                                            <Field.Label fontSize="sm" color="gray.700">Mô tả</Field.Label>
+                                            <Textarea
+                                                size="sm"
+                                                placeholder="Mô tả ngắn về thử thách"
+                                                rows={3}
+                                                value={form.description}
+                                                color="black"
+                                                _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }}
+                                                onChange={(e) => handleField("description", e.target.value)}
+                                            />
+                                            {errors.description && <Field.ErrorText>{errors.description}</Field.ErrorText>}
+                                        </Field.Root>
+
+                                        <Field.Root required invalid={!!errors.instruction}>
+                                            <Field.Label fontSize="sm" color="gray.700">Hướng dẫn</Field.Label>
+                                            <Textarea
+                                                size="sm"
+                                                placeholder="Hướng dẫn thực hiện thử thách"
+                                                rows={3}
+                                                value={form.instruction}
+                                                color="black"
+                                                _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }}
+                                                onChange={(e) => handleField("instruction", e.target.value)}
+                                            />
+                                            {errors.instruction && <Field.ErrorText>{errors.instruction}</Field.ErrorText>}
+                                        </Field.Root>
+
+                                        <Flex gap={4}>
+                                            <Field.Root required flex={1} invalid={!!errors.points}>
+                                                <Field.Label fontSize="sm" color="gray.700">Điểm thưởng</Field.Label>
+                                                <NumberInput.Root
+                                                    size="sm"
+                                                    min={0}
+                                                    value={String(form.points)}
+                                                    onValueChange={(e) => handleField("points", Number(e.value))}
+                                                >
+                                                    <NumberInput.Input placeholder="0" color="black" _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }} />
+                                                </NumberInput.Root>
+                                                {errors.points && <Field.ErrorText>{errors.points}</Field.ErrorText>}
+                                            </Field.Root>
+
+                                            <Field.Root required flex={1} invalid={!!errors.duration}>
+                                                <Field.Label fontSize="sm" color="gray.700">Thời lượng (ngày)</Field.Label>
+                                                <NumberInput.Root
+                                                    size="sm"
+                                                    min={0}
+                                                    value={String(form.duration)}
+                                                    onValueChange={(e) => handleField("duration", Number(e.value))}
+                                                >
+                                                    <NumberInput.Input placeholder="0" color="black" _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }} />
+                                                </NumberInput.Root>
+                                                {errors.duration && <Field.ErrorText>{errors.duration}</Field.ErrorText>}
+                                            </Field.Root>
+                                        </Flex>
+
+                                        <Field.Root required invalid={!!errors.starts_at}>
+                                            <Field.Label fontSize="sm" color="gray.700">Ngày bắt đầu</Field.Label>
+                                            <Input
+                                                size="sm"
+                                                type="datetime-local"
+                                                color="black"
+                                                _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }}
+                                                value={form.starts_at
+                                                    ? new Date(form.starts_at).toISOString().slice(0, 16)
+                                                    : ""}
+                                                onChange={(e) => handleDateField("starts_at", e.target.value)}
+                                            />
+                                            {errors.starts_at && <Field.ErrorText>{errors.starts_at}</Field.ErrorText>}
+                                        </Field.Root>
+
+                                        <Field.Root required invalid={!!errors.ends_at}>
+                                            <Field.Label fontSize="sm" color="gray.700">Ngày kết thúc</Field.Label>
+                                            <Input
+                                                size="sm"
+                                                type="datetime-local"
+                                                color="black"
+                                                _focusVisible={{ borderColor: "black", boxShadow: "0 0 0 1px black" }}
+                                                value={form.ends_at
+                                                    ? new Date(form.ends_at).toISOString().slice(0, 16)
+                                                    : ""}
+                                                onChange={(e) => handleDateField("ends_at", e.target.value)}
+                                            />
+                                            {errors.ends_at && <Field.ErrorText>{errors.ends_at}</Field.ErrorText>}
+                                        </Field.Root>
+                                    </Flex>
+                                </Dialog.Body>
+                                <Flex justify="flex-end" gap={2} mt={6}>
+                                    <Dialog.ActionTrigger asChild>
+                                        <Button variant="ghost" size="sm" color="gray.600" disabled={saving}>Huỷ</Button>
+                                    </Dialog.ActionTrigger>
+                                    <Button
+                                        size="sm"
+                                        bg="green.600"
+                                        color="white"
+                                        _hover={{ bg: "green.700" }}
+                                        loading={saving}
+                                        onClick={handleSave}
+                                    >
+                                        Lưu
+                                    </Button>
+                                </Flex>
+                            </Dialog.Content>
+                        </Dialog.Positioner>
+                    </Portal>
+                </Dialog.Root>
+
+                {loading ? (
+                    <Grid
+                        templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+                        gap={4}
+                    >
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <Skeleton key={i} borderRadius="xl" height="72px" />
+                        ))}
+                    </Grid>
+                ) : challenges.length === 0 ? (
+                    <Text color="gray.400" fontSize="sm">Chưa có thử thách nào.</Text>
+                ) : (
+                    <Grid
+                        templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+                        gap={4}
+                    >
+                        {challenges.map((challenge) => (
+                            <Box
+                                key={challenge.id}
+                                bg="white"
+                                borderRadius="xl"
+                                boxShadow="sm"
+                                border="1px solid"
+                                borderColor="gray.200"
+                                p={5}
+                                cursor="pointer"
+                                _hover={{ boxShadow: "md", borderColor: "green.300" }}
+                                transition="all 0.15s"
+                            >
+                                <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                                    {challenge.title}
+                                </Text>
+                            </Box>
+                        ))}
+                    </Grid>
+                )}
+            </Box>
+        </Box>
+    );
+}

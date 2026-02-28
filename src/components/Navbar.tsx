@@ -1,8 +1,7 @@
-import { Box, Flex, Heading, IconButton, Popover, Button, Image } from "@chakra-ui/react";
-import { LuMapPin, LuUser, LuLogOut, LuLogIn, LuShield } from "react-icons/lu";
+import { Box, Flex, IconButton, Popover, Button, Image, Text, Separator } from "@chakra-ui/react";
+import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser } from "react-icons/lu";
 import authgear, { SessionState, type WebContainer, type SessionStateChangeReason } from "@authgear/web";
 import { useState, useEffect } from "react";
-import { Cookies } from "react-cookie";
 import { fetchUserProfile } from "@/api/user";
 
 export const NAVBAR_HEIGHT = "56px";
@@ -14,8 +13,6 @@ async function handleLogin() {
 }
 
 async function handleLogout() {
-    const cookies = new Cookies();
-    cookies.remove("access-token", { path: "/" });
     await authgear.logout({
         redirectURI: window.location.origin + "/",
     });
@@ -28,16 +25,19 @@ export default function Navbar() {
     );
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
     const [isAdmin, setIsAdmin] = useState(false);
+    const [displayName, setDisplayName] = useState<string | undefined>();
 
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserProfile().then((profile) => {
                 setAvatarUrl(profile.picture);
                 setIsAdmin(profile.is_admin);
+                setDisplayName(profile.name ?? profile.preferredUsername ?? profile.email);
             });
         } else {
             setAvatarUrl(undefined);
             setIsAdmin(false);
+            setDisplayName(undefined);
         }
     }, [isAuthenticated]);
 
@@ -67,11 +67,29 @@ export default function Navbar() {
             px={4}
         >
             <Flex h="100%" align="center" justify="space-between">
-                <Flex align="center" gap={2}>
-                    <LuMapPin size={20} color="white" />
-                    <Heading size="sm" letterSpacing="tight" color="white">
-                        Midori
-                    </Heading>
+                <Image
+                    src="/logo.png"
+                    alt="Midori"
+                    h="36px"
+                    objectFit="contain"
+                    cursor="pointer"
+                    onClick={() => window.location.href = "/"}
+                />
+
+                {/* Center nav links */}
+                <Flex position="absolute" left="50%" transform="translateX(-50%)" align="center" gap={1}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        color="white"
+                        _hover={{ bg: "transparent" }}
+                        _active={{ bg: "transparent" }}
+                        onClick={() => window.location.href = "/"}
+                        gap={2}
+                    >
+                        <LuMap />
+                        Bản đồ
+                    </Button>
                 </Flex>
 
                 <Popover.Root positioning={{ placement: "bottom-end" }}>
@@ -98,33 +116,69 @@ export default function Navbar() {
                         </IconButton>
                     </Popover.Trigger>
                     <Popover.Positioner>
-                        <Popover.Content w="auto" p={2} bg="white" boxShadow="0 2px 8px rgba(0,0,0,0.10)">
+                        <Popover.Content minW="180px" p={0} bg="white" boxShadow="0 2px 8px rgba(0,0,0,0.10)" overflow="hidden">
                             {isAuthenticated ? (
                                 <Flex direction="column">
-                                    {isAdmin && (
+                                    {/* Profile header */}
+                                    <Flex direction="column" align="center" gap={2} pt={4} pb={3} px={4}>
+                                        {avatarUrl ? (
+                                            <Image
+                                                src={avatarUrl}
+                                                alt="Avatar"
+                                                boxSize="56px"
+                                                borderRadius="full"
+                                                objectFit="cover"
+                                            />
+                                        ) : (
+                                            <Box boxSize="56px" borderRadius="full" bg="gray.200" display="flex" alignItems="center" justifyContent="center">
+                                                <LuUser size={24} />
+                                            </Box>
+                                        )}
+                                        {displayName && (
+                                            <Text fontWeight="semibold" fontSize="sm" color="gray.800" textAlign="center">
+                                                {displayName}
+                                            </Text>
+                                        )}
+                                    </Flex>
+                                    <Separator />
+                                    {/* Actions */}
+                                    <Flex direction="column" p={1}>
                                         <Button
                                             variant="ghost"
                                             size="sm"
                                             color="black"
                                             _hover={{ bg: "transparent" }}
-                                            onClick={() => window.location.href = "/admin"}
+                                            onClick={() => window.location.href = "/profile"}
                                             gap={2}
                                         >
-                                            <LuShield />
-                                            Quản trị
+                                            <LuCircleUser />
+                                            Xem hồ sơ
                                         </Button>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        color="red.500"
-                                        _hover={{ bg: "transparent" }}
-                                        onClick={handleLogout}
-                                        gap={2}
-                                    >
-                                        <LuLogOut />
-                                        Đăng xuất
-                                    </Button>
+                                        {isAdmin && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                color="black"
+                                                _hover={{ bg: "transparent" }}
+                                                onClick={() => window.location.href = "/admin"}
+                                                gap={2}
+                                            >
+                                                <LuShield />
+                                                Quản trị
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            color="red.500"
+                                            _hover={{ bg: "transparent" }}
+                                            onClick={handleLogout}
+                                            gap={2}
+                                        >
+                                            <LuLogOut />
+                                            Đăng xuất
+                                        </Button>
+                                    </Flex>
                                 </Flex>
                             ) : (
                                 <Button

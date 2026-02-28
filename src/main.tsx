@@ -4,7 +4,6 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "./components/ui/provider";
 import { Toaster } from "./components/ui/toaster";
 import authgear from "@authgear/web";
-import { CookiesProvider } from "react-cookie";
 
 async function init(): Promise<void> {
   try {
@@ -19,10 +18,8 @@ async function init(): Promise<void> {
     createRoot(document.getElementById("root")!).render(
       <StrictMode>
         <Provider>
-          <CookiesProvider>
-            <Toaster />
-            <Routes />
-          </CookiesProvider>
+          <Toaster />
+          <Routes />
         </Provider>
       </StrictMode>,
     );
