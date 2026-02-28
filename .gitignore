@@ -25,3 +25,6 @@ dist-ssr
 
 # generouted file
 src/router.ts
+
+# env file
+.env
