@@ -25,6 +25,17 @@ export async function createChallenge(data: DTOCreateChallenge): Promise<Challen
     return challenge;
 }
 
+export async function deleteChallenge(id: string): Promise<void> {
+    const deleteChallengeEndpoint: string = appendPath(CHALLENGE_ADMIN_API_ENDPOINT, `/${id}`);
+
+    await fetch(deleteChallengeEndpoint, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+    });
+}
+
 export interface Challenge {
     id: string;
     title: string;

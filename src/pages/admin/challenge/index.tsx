@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import { Box, Button, Dialog, Field, Flex, Grid, Heading, IconButton, Input, NumberInput, Portal, Skeleton, Text, Textarea } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuPlus, LuX } from "react-icons/lu";
-import { getAllChallenges, createChallenge } from "@/api/challenge";
+import { getAllChallenges, createChallenge, deleteChallenge } from "@/api/challenge";
 import type { Challenge, DTOCreateChallenge } from "@/api/challenge";
 import { toaster } from "@/components/ui/toaster";
 
@@ -26,6 +26,23 @@ export default function AdminChallengePage(): JSX.Element {
     const [form, setForm] = useState<DTOCreateChallenge>(emptyForm());
     const [errors, setErrors] = useState<Partial<Record<keyof DTOCreateChallenge, string>>>({});
     const [viewChallenge, setViewChallenge] = useState<Challenge | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    async function handleDelete() {
+        if (!viewChallenge) return;
+        setDeleting(true);
+        const toastId = toaster.create({ title: "Đang xoá thử thách...", type: "loading" });
+        try {
+            await deleteChallenge(viewChallenge.id);
+            setChallenges((prev) => prev.filter((c) => c.id !== viewChallenge.id));
+            setViewChallenge(null);
+            toaster.update(toastId, { title: "Xoá thử thách thành công!", type: "success", duration: 3000 });
+        } catch {
+            toaster.update(toastId, { title: "Xoá thử thách thất bại.", description: "Vui lòng thử lại.", type: "error", duration: 4000 });
+        } finally {
+            setDeleting(false);
+        }
+    }
 
     function validate(): boolean {
         const e: Partial<Record<keyof DTOCreateChallenge, string>> = {};
@@ -326,7 +343,7 @@ export default function AdminChallengePage(): JSX.Element {
             </Box>
 
             {/* View challenge modal */}
-            <Dialog.Root open={!!viewChallenge} onOpenChange={(e) => { if (!e.open) setViewChallenge(null); }}>
+            <Dialog.Root open={!!viewChallenge} onOpenChange={(e) => { if (deleting) return; if (!e.open) setViewChallenge(null); }}>
                 <Portal>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
@@ -379,8 +396,9 @@ export default function AdminChallengePage(): JSX.Element {
                                     </Flex>
                                 )}
                             </Dialog.Body>
-                            <Flex justify="flex-end" mt={6}>
-                                <Button size="sm" variant="ghost" color="gray.600" onClick={() => setViewChallenge(null)}>Đóng</Button>
+                            <Flex justify="space-between" align="center" mt={6}>
+                                <Button size="sm" colorPalette="red" variant="subtle" loading={deleting} onClick={handleDelete}>Xoá</Button>
+                                <Button size="sm" variant="ghost" color="gray.600" disabled={deleting} onClick={() => setViewChallenge(null)}>Đóng</Button>
                             </Flex>
                         </Dialog.Content>
                     </Dialog.Positioner>
