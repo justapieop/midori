@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { JSX } from "react";
-import { Box, Button, Dialog, Field, Flex, Grid, Heading, IconButton, Input, NumberInput, Portal, Skeleton, Text, Textarea } from "@chakra-ui/react";
+import { Box, Button, Dialog, Field, Flex, Grid, Heading, IconButton, Image, Input, NumberInput, Portal, Skeleton, Text, Textarea } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuPlus, LuX } from "react-icons/lu";
 import { getAllChallenges, createChallenge, deleteChallenge } from "@/api/challenge";
 import type { Challenge, DTOCreateChallenge } from "@/api/challenge";
+import { fetchImage } from "@/api/file";
 import { toaster } from "@/components/ui/toaster";
 
-const emptyForm = (): DTOCreateChallenge => ({
+type ChallengeFormData = Omit<DTOCreateChallenge, "cover_image">;
+
+const emptyForm = (): ChallengeFormData => ({
     title: "",
     description: "",
     instruction: "",
@@ -23,10 +26,27 @@ export default function AdminChallengePage(): JSX.Element {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [form, setForm] = useState<DTOCreateChallenge>(emptyForm());
+    const [form, setForm] = useState<ChallengeFormData>(emptyForm());
     const [errors, setErrors] = useState<Partial<Record<keyof DTOCreateChallenge, string>>>({});
+    const [coverImage, setCoverImage] = useState<File | null>(null);
+    const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+    const coverImageInputRef = useRef<HTMLInputElement>(null);
     const [viewChallenge, setViewChallenge] = useState<Challenge | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [coverImageUrls, setCoverImageUrls] = useState<Record<string, string>>({});
+
+    function loadCoverImages(challenges: Challenge[]) {
+        challenges.forEach((c) => {
+            if (!c.cover_image) return;
+            fetchImage(c.cover_image)
+                .then((buf) => {
+                    const blob = new Blob([buf]);
+                    const url = URL.createObjectURL(blob);
+                    setCoverImageUrls((prev) => ({ ...prev, [c.id]: url }));
+                })
+                .catch(() => { /* ignore failed image loads */ });
+        });
+    }
 
     async function handleDelete() {
         if (!viewChallenge) return;
@@ -59,17 +79,21 @@ export default function AdminChallengePage(): JSX.Element {
         else if (!e.starts_at && endsAt <= startsAt) e.ends_at = "Ngày kết thúc phải sau ngày bắt đầu.";
         if (form.points <= 0) e.points = "Điểm thưởng phải lớn hơn 0.";
         if (form.duration <= 0) e.duration = "Thời lượng phải lớn hơn 0.";
+        if (!coverImage) e.cover_image = "Vui lòng chọn ảnh bìa.";
         setErrors(e);
         return Object.keys(e).length === 0;
     }
 
     useEffect(() => {
         getAllChallenges()
-            .then(setChallenges)
+            .then((data) => {
+                setChallenges(data);
+                loadCoverImages(data);
+            })
             .finally(() => setLoading(false));
     }, []);
 
-    function handleField<K extends keyof DTOCreateChallenge>(key: K, value: DTOCreateChallenge[K]) {
+    function handleField<K extends keyof ChallengeFormData>(key: K, value: ChallengeFormData[K]) {
         setForm((prev) => ({ ...prev, [key]: value }));
         setErrors((prev) => ({ ...prev, [key]: undefined }));
     }
@@ -93,11 +117,23 @@ export default function AdminChallengePage(): JSX.Element {
             type: "loading",
         });
         try {
-            const created = await createChallenge(form);
+            const created = await createChallenge({ ...form, cover_image: coverImage! });
             setChallenges((prev) => [...prev, created]);
+            // fetch cover for newly created challenge
+            if (created.cover_image) {
+                fetchImage(created.cover_image)
+                    .then((buf) => {
+                        const blob = new Blob([buf]);
+                        const url = URL.createObjectURL(blob);
+                        setCoverImageUrls((prev) => ({ ...prev, [created.id]: url }));
+                    })
+                    .catch(() => { /* ignore */ });
+            }
             setModalOpen(false);
             setForm(emptyForm());
             setErrors({});
+            setCoverImage(null);
+            setCoverImagePreview(null);
             toaster.update(toastId, {
                 title: "Tạo thử thách thành công!",
                 type: "success",
@@ -153,7 +189,7 @@ export default function AdminChallengePage(): JSX.Element {
                     </Button>
                 </Flex>
 
-                <Dialog.Root open={modalOpen} onOpenChange={(e) => { if (saving) return; setModalOpen(e.open); if (!e.open) { setForm(emptyForm()); setErrors({}); } }}>
+                <Dialog.Root open={modalOpen} onOpenChange={(e) => { if (saving) return; setModalOpen(e.open); if (!e.open) { setForm(emptyForm()); setErrors({}); setCoverImage(null); setCoverImagePreview(null); } }}>
                     <Portal>
                         <Dialog.Backdrop />
                         <Dialog.Positioner>
@@ -249,6 +285,49 @@ export default function AdminChallengePage(): JSX.Element {
                                             </Field.Root>
                                         </Flex>
 
+                                        <Field.Root required invalid={!!errors.cover_image}>
+                                            <Field.Label fontSize="sm" color="gray.700">Ảnh bìa</Field.Label>
+                                            <input
+                                                ref={coverImageInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                style={{ display: "none" }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0] ?? null;
+                                                    setCoverImage(file);
+                                                    setCoverImagePreview(file ? URL.createObjectURL(file) : null);
+                                                    setErrors((prev) => ({ ...prev, cover_image: undefined }));
+                                                }}
+                                            />
+                                            <Box
+                                                border="1px dashed"
+                                                borderColor={errors.cover_image ? "red.400" : "gray.300"}
+                                                borderRadius="md"
+                                                p={3}
+                                                cursor="pointer"
+                                                _hover={{ borderColor: "green.400", bg: "green.50" }}
+                                                transition="all 0.15s"
+                                                onClick={() => coverImageInputRef.current?.click()}
+                                                textAlign="center"
+                                            >
+                                                {coverImagePreview ? (
+                                                    <Image
+                                                        src={coverImagePreview}
+                                                        alt="Cover preview"
+                                                        w="full"
+                                                        borderRadius="md"
+                                                        objectFit="contain"
+                                                    />
+                                                ) : (
+                                                    <Text fontSize="sm" color="gray.400">Nhấn để chọn ảnh bìa</Text>
+                                                )}
+                                            </Box>
+                                            {coverImage && (
+                                                <Text fontSize="xs" color="gray.500" mt={1}>{coverImage.name}</Text>
+                                            )}
+                                            {errors.cover_image && <Field.ErrorText>{errors.cover_image}</Field.ErrorText>}
+                                        </Field.Root>
+
                                         <Field.Root required invalid={!!errors.starts_at}>
                                             <Field.Label fontSize="sm" color="gray.700">Ngày bắt đầu</Field.Label>
                                             <Input
@@ -315,6 +394,7 @@ export default function AdminChallengePage(): JSX.Element {
                     <Grid
                         templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
                         gap={4}
+                        alignItems="start"
                     >
                         {challenges.map((challenge) => (
                             <Box
@@ -324,18 +404,28 @@ export default function AdminChallengePage(): JSX.Element {
                                 boxShadow="sm"
                                 border="1px solid"
                                 borderColor="gray.200"
-                                p={5}
+                                overflow="hidden"
                                 cursor="pointer"
                                 _hover={{ boxShadow: "md", borderColor: "green.300" }}
                                 transition="all 0.15s"
                                 onClick={() => setViewChallenge(challenge)}
                             >
-                                <Text fontWeight="semibold" color="gray.800" fontSize="sm">
-                                    {challenge.title}
-                                </Text>
-                                <Text color="gray.500" fontSize="xs" mt={1} lineClamp={2}>
-                                    {challenge.description}
-                                </Text>
+                                {coverImageUrls[challenge.id] && (
+                                    <Image
+                                        src={coverImageUrls[challenge.id]}
+                                        alt={challenge.title}
+                                        w="full"
+                                        objectFit="contain"
+                                    />
+                                )}
+                                <Box p={5}>
+                                    <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                                        {challenge.title}
+                                    </Text>
+                                    <Text color="gray.500" fontSize="xs" mt={1} lineClamp={2}>
+                                        {challenge.description}
+                                    </Text>
+                                </Box>
                             </Box>
                         ))}
                     </Grid>
@@ -361,6 +451,15 @@ export default function AdminChallengePage(): JSX.Element {
                             <Dialog.Body px={0}>
                                 {viewChallenge && (
                                     <Flex direction="column" gap={4}>
+                                        {coverImageUrls[viewChallenge.id] && (
+                                            <Image
+                                                src={coverImageUrls[viewChallenge.id]}
+                                                alt={viewChallenge.title}
+                                                w="full"
+                                                objectFit="contain"
+                                                borderRadius="md"
+                                            />
+                                        )}
                                         <Field.Root>
                                             <Field.Label fontSize="sm" color="gray.700">Tiêu đề</Field.Label>
                                             <Input size="sm" value={viewChallenge.title} readOnly color="black" bg="gray.50" />

@@ -16,13 +16,18 @@ export async function getAllChallenges(): Promise<Challenge[]> {
 }
 
 export async function createChallenge(data: DTOCreateChallenge): Promise<Challenge> {
+    const formData: FormData = new FormData();
+
+    for (let [k, v] of Object.entries(data)) {
+        formData.append(k, v);
+    }
+
     const challenge: Challenge = await (await fetch(CHALLENGE_ADMIN_API_ENDPOINT, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${authgear.accessToken}`,
-            "Content-Type": "application/json",
         },
-        body: JSON.stringify(data)
+        body: formData
     })).json();
 
     return challenge;
@@ -77,6 +82,8 @@ export interface Challenge {
     ends_at: Date;
     points: number;
     duration: number;
+    created_by: string,
+    cover_image: string,
 }
 
 export interface DTOCreateChallenge {
@@ -87,4 +94,5 @@ export interface DTOCreateChallenge {
     ends_at: string;
     points: number;
     duration: number;
+    cover_image: File
 }
