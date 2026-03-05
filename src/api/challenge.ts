@@ -55,6 +55,17 @@ export async function enrollChallenge(id: string) {
     });
 }
 
+export async function withdrawChallenge(id: string): Promise<void> {
+    const withdrawEndpoint: string = appendPath(CHALLENGE_API_ENDPOINT, `/${id}`);
+
+    await fetch(withdrawEndpoint, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+    });
+}
+
 export async function uploadChallenge(id: string, file: File): Promise<void> {
     const uploadEndpoint: string = appendPath(CHALLENGE_API_ENDPOINT, `/${id}`);
 

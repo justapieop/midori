@@ -77,7 +77,7 @@ export default function Navbar() {
                 />
 
                 {/* Center nav links */}
-                <Flex position="absolute" left="50%" transform="translateX(-50%)" align="center" gap={1}>
+                <Flex position="absolute" left="50%" transform="translateX(-50%)" align="center" gap={1} pointerEvents="none">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -86,6 +86,7 @@ export default function Navbar() {
                         _active={{ bg: "transparent" }}
                         onClick={() => window.location.href = "/"}
                         gap={2}
+                        pointerEvents="auto"
                     >
                         <LuMap />
                         Bản đồ
@@ -99,6 +100,7 @@ export default function Navbar() {
                         onClick={() => window.location.href = "/challenge"}
                         gap={2}
                         display={isAuthenticated ? undefined : "none"}
+                        pointerEvents="auto"
                     >
                         <LuTrophy />
                         Thử thách
