@@ -1,10 +1,14 @@
 import { appendPath, BASE_URL } from "./utils";
 import authgear from "@authgear/web";
+import { challengesCache, userChallengeCache, SINGLE } from "./cache";
 
 const CHALLENGE_API_ENDPOINT: string = appendPath(BASE_URL, "/challenge");
 const CHALLENGE_ADMIN_API_ENDPOINT: string = appendPath(BASE_URL, "/admin/challenge");
 
 export async function getAllChallenges(): Promise<Challenge[]> {
+    const cached = challengesCache.get(SINGLE);
+    if (cached) return cached;
+
     const challenges: Challenge[] = await (await fetch(CHALLENGE_API_ENDPOINT, {
         method: "GET",
         headers: {
@@ -12,6 +16,7 @@ export async function getAllChallenges(): Promise<Challenge[]> {
         },
     })).json();
 
+    challengesCache.set(SINGLE, challenges);
     return challenges;
 }
 
@@ -30,6 +35,7 @@ export async function createChallenge(data: DTOCreateChallenge): Promise<Challen
         body: formData
     })).json();
 
+    challengesCache.delete(SINGLE);
     return challenge;
 }
 
@@ -42,6 +48,8 @@ export async function deleteChallenge(id: string): Promise<void> {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
     });
+
+    challengesCache.delete(SINGLE);
 }
 
 export async function enrollChallenge(id: string) {
@@ -53,6 +61,8 @@ export async function enrollChallenge(id: string) {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
     });
+
+    userChallengeCache.delete(SINGLE);
 }
 
 export async function withdrawChallenge(id: string): Promise<void> {
@@ -64,6 +74,8 @@ export async function withdrawChallenge(id: string): Promise<void> {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
     });
+
+    userChallengeCache.delete(SINGLE);
 }
 
 export async function uploadChallenge(id: string, file: File): Promise<void> {
@@ -91,6 +103,8 @@ export async function finishChallenge(id: string): Promise<void> {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
     });
+
+    userChallengeCache.delete(SINGLE);
 }
 
 export interface Challenge {
