@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { JSX } from "react";
-import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import authgear, { SessionState } from "@authgear/web";
 import { useNavigate } from "react-router-dom";
+import { LuTrophy } from "react-icons/lu";
 import { getAllChallenges, withdrawChallenge, enrollChallenge, finishChallenge } from "@/api/challenge";
 import type { Challenge } from "@/api/challenge";
 import { fetchImage } from "@/api/file";
@@ -12,6 +13,7 @@ import { ChallengeDetailModal } from "@/components/challenge/ChallengeDetailModa
 import { ChallengeHeroBanner } from "@/components/challenge/ChallengeHeroBanner";
 import { ChallengeSections } from "@/components/challenge/ChallengeSection";
 import { JoinedChallengeBanner } from "@/components/challenge/JoinedChallengeBanner";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 export default function ChallengePage(): JSX.Element {
     const navigate = useNavigate();
@@ -49,11 +51,7 @@ export default function ChallengePage(): JSX.Element {
     }, []);
 
     if (checking) {
-        return (
-            <Flex h="100vh" align="center" justify="center" bg="gray.50">
-                <Spinner size="lg" />
-            </Flex>
-        );
+        return <LoadingScreen icon={LuTrophy} message="Đang tải thử thách..." />
     }
 
     return (

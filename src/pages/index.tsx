@@ -3,10 +3,12 @@ import type { JSX } from "react";
 import { Map as VietmapMap, NavigationControl, Marker } from "@vietmap/vietmap-gl-js/dist/vietmap-gl.js";
 import "@vietmap/vietmap-gl-js/dist/vietmap-gl.css";
 import { createRoot } from "react-dom/client";
+import { LuMap } from "react-icons/lu";
 import MapMarker from "@/components/maps/MapMarker";
 import PinOverlay from "@/components/maps/PinOverlay";
 import Navbar, { NAVBAR_HEIGHT } from "@/components/Navbar";
 import { Provider } from "@/components/ui/provider";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { fetchAllPins, fetchAllPinTypes } from "@/api";
 import type { Pin as PinData, PinType } from "@/api/pin";
 
@@ -18,6 +20,7 @@ function iconToDataUrl(icon: number[]): string {
 
 export default function Home(): JSX.Element {
     const [selectedPin, setSelectedPin] = useState<PinData | null>(null);
+    const [loading, setLoading] = useState(true);
     const setSelectedPinRef = useRef(setSelectedPin);
     setSelectedPinRef.current = setSelectedPin;
 
@@ -64,6 +67,8 @@ export default function Home(): JSX.Element {
                     .setLngLat([pin.long, pin.lat])
                     .addTo(map);
             }
+
+            setLoading(false);
         });
 
         return () => {
@@ -85,6 +90,14 @@ export default function Home(): JSX.Element {
                     bottom: 0,
                 }}
             />
+            {loading && (
+                <LoadingScreen
+                    icon={LuMap}
+                    message="Đang tải bản đồ..."
+                    variant="fixed"
+                    top={NAVBAR_HEIGHT}
+                />
+            )}
             {selectedPin && (
                 <PinOverlay pin={selectedPin} onClose={() => setSelectedPin(null)} />
             )}
