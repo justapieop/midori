@@ -1,7 +1,8 @@
 import type { JSX } from "react";
-import { Box, Flex, Heading, Icon, Image, Stack, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Icon, Image, Text } from "@chakra-ui/react";
 import { LuCalendar, LuClock, LuStar, LuTrophy } from "react-icons/lu";
 import type { Challenge } from "@/api/challenge";
+import { StatChip } from "@/components/challenge/StatChip";
 
 interface JoinedChallengeCardProps {
     challenge: Challenge;
@@ -62,22 +63,14 @@ export function JoinedChallengeCard({ challenge, coverUrl }: JoinedChallengeCard
                     <Text fontSize="sm" color="gray.500" mb={3} lineHeight="tall" lineClamp={2}>
                         {challenge.description}
                     </Text>
-                    <Stack gap={1}>
-                        <Flex align="center" gap={2} fontSize="xs" color="gray.500">
-                            <LuStar />
-                            <Text>{challenge.points} điểm</Text>
-                        </Flex>
-                        <Flex align="center" gap={2} fontSize="xs" color="gray.500">
-                            <LuClock />
-                            <Text>{challenge.duration} ngày</Text>
-                        </Flex>
-                        <Flex align="center" gap={2} fontSize="xs" color="gray.500">
-                            <LuCalendar />
-                            <Text>
-                                {new Date(challenge.starts_at).toLocaleDateString("vi-VN")} – {new Date(challenge.ends_at).toLocaleDateString("vi-VN")}
-                            </Text>
-                        </Flex>
-                    </Stack>
+                    <Flex gap={2} flexWrap="wrap">
+                        <StatChip icon={<LuStar />} label={`${challenge.points} điểm`} />
+                        <StatChip icon={<LuClock />} label={`${challenge.duration} ngày`} />
+                        <StatChip
+                            icon={<LuCalendar />}
+                            label={`${new Date(challenge.starts_at).toLocaleDateString("vi-VN")} – ${new Date(challenge.ends_at).toLocaleDateString("vi-VN")}`}
+                        />
+                    </Flex>
                 </Box>
             </Flex>
         </Box>

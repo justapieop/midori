@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import type { JSX } from "react";
-import { Box, Flex, Heading, Icon, Spinner, Text } from "@chakra-ui/react";
+import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
 import authgear, { SessionState } from "@authgear/web";
 import { useNavigate } from "react-router-dom";
-import { LuTrophy } from "react-icons/lu";
-import { getAllChallenges, withdrawChallenge, enrollChallenge } from "@/api/challenge";
+import { getAllChallenges, withdrawChallenge, enrollChallenge, finishChallenge } from "@/api/challenge";
 import type { Challenge } from "@/api/challenge";
 import { fetchImage } from "@/api/file";
 import { getCurrentUserChallenge } from "@/api/user";
-import Navbar, { NAVBAR_HEIGHT } from "@/components/Navbar";
+import Navbar from "@/components/Navbar";
 import { ChallengeDetailModal } from "@/components/challenge/ChallengeDetailModal";
+import { ChallengeHeroBanner } from "@/components/challenge/ChallengeHeroBanner";
 import { ChallengeSections } from "@/components/challenge/ChallengeSection";
 import { JoinedChallengeBanner } from "@/components/challenge/JoinedChallengeBanner";
 
@@ -60,39 +60,7 @@ export default function ChallengePage(): JSX.Element {
         <Box minH="100vh" bg="gray.50">
             <Navbar />
 
-            {/* Hero banner */}
-            <Box
-                pt={NAVBAR_HEIGHT}
-                bgGradient="to-br"
-                gradientFrom="green.500"
-                gradientTo="teal.400"
-                px={{ base: 4, md: 8 }}
-            >
-                <Flex
-                    maxW="1200px"
-                    mx="auto"
-                    py={10}
-                    align="center"
-                    gap={4}
-                >
-                    <Box
-                        bg="whiteAlpha.200"
-                        borderRadius="xl"
-                        p={3}
-                        color="white"
-                    >
-                        <Icon as={LuTrophy} boxSize={7} />
-                    </Box>
-                    <Box>
-                        <Heading size="xl" color="white" fontWeight="bold">
-                            Thử thách
-                        </Heading>
-                        <Text color="whiteAlpha.800" fontSize="sm" mt={1}>
-                            Tham gia các thử thách để kiếm điểm và nâng cao kỹ năng của bạn.
-                        </Text>
-                    </Box>
-                </Flex>
-            </Box>
+            <ChallengeHeroBanner />
 
             <Box
                 pt={8}
@@ -111,7 +79,7 @@ export default function ChallengePage(): JSX.Element {
                     />
                 ))}
 
-                {challenges.filter((c) => !joinedChallenges.some((j) => j.id === c.id)).length === 0 && joinedChallenges.length === 0 ? (
+                {joinedChallenges.length === 0 && challenges.length === 0 ? (
                     <Flex
                         direction="column"
                         align="center"
@@ -122,19 +90,20 @@ export default function ChallengePage(): JSX.Element {
                     >
                         <Text fontSize="lg">Chưa có thử thách nào.</Text>
                     </Flex>
-                ) : (
+                ) : joinedChallenges.length === 0 ? (
                     <ChallengeSections
-                        challenges={challenges.filter((c) => !joinedChallenges.some((j) => j.id === c.id))}
+                        challenges={challenges}
                         coverUrls={coverUrls}
                         onSelect={setSelected}
                     />
-                )}
+                ) : null}
 
                 <ChallengeDetailModal
                     challenge={selected}
                     coverUrl={selected ? coverUrls[selected.id] : undefined}
                     joinable={selected ? new Date(selected.starts_at) <= new Date() && new Date() <= new Date(selected.ends_at) : false}
                     isJoined={!!(selected && joinedChallenges.some((j) => j.id === selected.id))}
+                    hasJoinedChallenge={joinedChallenges.length > 0 && !(selected && joinedChallenges.some((j) => j.id === selected.id))}
                     onJoin={async () => {
                         if (!selected) return;
                         try {
@@ -146,6 +115,13 @@ export default function ChallengePage(): JSX.Element {
                         if (!selected) return;
                         try {
                             await withdrawChallenge(selected.id);
+                            setJoinedChallenges((prev) => prev.filter((c) => c.id !== selected.id));
+                        } catch {}
+                    }}
+                    onComplete={async () => {
+                        if (!selected) return;
+                        try {
+                            await finishChallenge(selected.id);
                             setJoinedChallenges((prev) => prev.filter((c) => c.id !== selected.id));
                         } catch {}
                     }}

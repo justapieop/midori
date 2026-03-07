@@ -82,6 +82,17 @@ export async function uploadChallenge(id: string, file: File): Promise<void> {
     });
 }
 
+export async function finishChallenge(id: string): Promise<void> {
+    const uploadEndpoint: string = appendPath(CHALLENGE_API_ENDPOINT, `/${id}`);
+
+    await fetch(uploadEndpoint, {
+        method: "PATCH",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+    });
+}
+
 export interface Challenge {
     id: string;
     title: string;
