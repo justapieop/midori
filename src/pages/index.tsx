@@ -42,6 +42,15 @@ export default function Home(): JSX.Element {
         mapRef.current = map;
 
         map.on("load", async () => {
+            const style = map.getStyle();
+            if (style?.layers) {
+                for (const layer of style.layers) {
+                    if (layer.type === "symbol" && map.getLayoutProperty(layer.id, "icon-image")) {
+                        map.setLayoutProperty(layer.id, "visibility", "none");
+                    }
+                }
+            }
+
             const [pins, types]: [PinData[], PinType[]] = await Promise.all([
                 fetchAllPins(),
                 fetchAllPinTypes(),
