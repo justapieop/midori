@@ -8,11 +8,15 @@ import { getAllChallenges, withdrawChallenge, enrollChallenge, finishChallenge }
 import type { Challenge } from "@/api/challenge";
 import { fetchImage } from "@/api/file";
 import { getCurrentUserChallenge } from "@/api/user";
+import { userChallengeCache, userChallengeLinkCache, SINGLE } from "@/api/cache";
+import type { UserChallenge } from "@/api/challenge";
 import Navbar from "@/components/Navbar";
 import { ChallengeDetailModal } from "@/components/challenge/ChallengeDetailModal";
 import { ChallengeHeroBanner } from "@/components/challenge/ChallengeHeroBanner";
 import { ChallengeSections } from "@/components/challenge/ChallengeSection";
 import { JoinedChallengeBanner } from "@/components/challenge/JoinedChallengeBanner";
+import { ChallengeUpload } from "@/components/challenge/ChallengeUpload";
+import { ChallengeUploadGallery } from "@/components/challenge/ChallengeUploadGallery";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 export default function ChallengePage(): JSX.Element {
@@ -21,7 +25,8 @@ export default function ChallengePage(): JSX.Element {
     const [challenges, setChallenges] = useState<Challenge[]>([]);
     const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
     const [selected, setSelected] = useState<Challenge | null>(null);
-    const [joinedChallenges, setJoinedChallenges] = useState<Challenge[]>([]);
+    const [joinedChallenges, setJoinedChallenges] = useState<UserChallenge[]>([]);
+    const [galleryRefreshKeys, setGalleryRefreshKeys] = useState<Record<string, number>>({});
 
     useEffect(() => {
         if (authgear.sessionState !== SessionState.Authenticated) {
@@ -31,11 +36,12 @@ export default function ChallengePage(): JSX.Element {
 
         Promise.all([
             getAllChallenges(),
-            getCurrentUserChallenge().catch(() => []),
+            getCurrentUserChallenge().catch(() => null),
         ]).then(([data, joined]) => {
-                setJoinedChallenges(joined);
+                const joinedList = joined ? [joined] : [];
+                setJoinedChallenges(joinedList);
                 setChallenges(data);
-                const toLoad = [...data, ...joined];
+                const toLoad = [...data, ...joinedList];
                 toLoad.forEach((c) => {
                     if (!c.cover_image) return;
                     fetchImage(c.cover_image)
@@ -69,12 +75,25 @@ export default function ChallengePage(): JSX.Element {
             >
                 {/* Joined challenge banners */}
                 {joinedChallenges.map((jc) => (
-                    <JoinedChallengeBanner
-                        key={jc.id}
-                        challenge={jc}
-                        coverUrl={coverUrls[jc.id]}
-                        onSelect={setSelected}
-                    />
+                    <Box key={jc.id}>
+                        <JoinedChallengeBanner
+                            challenge={jc}
+                            coverUrl={coverUrls[jc.id]}
+                            onSelect={setSelected}
+                        />
+                        <ChallengeUpload
+                            challengeId={jc.id}
+                            onUploadSuccess={() =>
+                                setGalleryRefreshKeys((prev) => ({ ...prev, [jc.id]: (prev[jc.id] ?? 0) + 1 }))
+                            }
+                        />
+                        <ChallengeUploadGallery
+                            challengeId={jc.id}
+                            refreshKey={galleryRefreshKeys[jc.id] ?? 0}
+                            joinedAt={new Date(jc.joined_at)}
+                            endsAt={new Date(jc.ends_at)}
+                        />
+                    </Box>
                 ))}
 
                 {joinedChallenges.length === 0 && challenges.length === 0 ? (
@@ -106,7 +125,12 @@ export default function ChallengePage(): JSX.Element {
                         if (!selected) return;
                         try {
                             await enrollChallenge(selected.id);
-                            setJoinedChallenges((prev) => [...prev, selected]);
+                            userChallengeCache.delete(SINGLE);
+                            userChallengeLinkCache.delete(SINGLE);
+                            const refreshed = await getCurrentUserChallenge();
+                            if (refreshed) setJoinedChallenges([refreshed]);
+                            setSelected(null);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                         } catch {}
                     }}
                     onWithdraw={async () => {
