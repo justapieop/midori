@@ -122,6 +122,16 @@ export interface Challenge {
     cover_image: string,
 }
 
+export interface UserChallengeLink {
+    user_id: string,
+    challenge_id: string,
+    joined_at: Date,
+    finished: boolean,
+    finished_at: Date
+}
+
+export interface UserChallenge extends UserChallengeLink, Challenge { }
+
 export interface DTOCreateChallenge {
     title: string;
     description: string;
