@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuPlus } from "react-icons/lu";
 import { getAllChallenges } from "@/api/challenge";
 import type { Challenge } from "@/api/challenge";
-import { fetchImage } from "@/api/file";
+import { fetchPublicAssets } from "@/api/file";
 import { CreateChallengeModal } from "@/components/admin/challenge/CreateChallengeModal";
 import { ViewChallengeModal } from "@/components/admin/challenge/ViewChallengeModal";
 
@@ -23,12 +23,7 @@ export default function AdminChallengePage(): JSX.Element {
                 setChallenges(data);
                 data.forEach((c) => {
                     if (!c.cover_image) return;
-                    fetchImage(c.cover_image)
-                        .then((buf) => {
-                            const url = URL.createObjectURL(new Blob([buf]));
-                            setCoverImageUrls((prev) => ({ ...prev, [c.id]: url }));
-                        })
-                        .catch(() => {});
+                    setCoverImageUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
                 });
             })
             .finally(() => setLoading(false));

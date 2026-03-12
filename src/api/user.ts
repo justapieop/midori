@@ -1,8 +1,7 @@
-import type { UserInfo } from "@authgear/web";
 import authgear from "@authgear/web";
 import { appendPath, BASE_URL } from "./utils";
 import type { Challenge, UserChallenge, UserChallengeLink } from "./challenge";
-import { userProfileCache, userChallengeCache, userChallengeLinkCache, userUploadsCache, SINGLE } from "./cache";
+import { userProfileCache, userChallengeCache, userChallengeLinkCache, userUploadsCache, userByIdCache, SINGLE } from "./cache";
 import { getAllChallenges } from "./challenge";
 
 const USER_API_ENDPOINT: string = appendPath(BASE_URL, "/user");
@@ -11,18 +10,16 @@ export async function fetchUserProfile(): Promise<UserProfile> {
     const cached = userProfileCache.get(SINGLE);
     if (cached) return cached;
 
-    const data: UserInfo = await authgear.fetchUserInfo();
 
-    const fetchedData: PartialUserProfile = await (await fetch(USER_API_ENDPOINT, {
+    const fetchedData: UserProfile = await (await fetch(USER_API_ENDPOINT, {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
     })).json();
 
-    const profile = { ...data, ...fetchedData };
-    userProfileCache.set(SINGLE, profile);
-    return profile;
+    userProfileCache.set(SINGLE, fetchedData);
+    return fetchedData;
 }
 
 export async function getCurrentUserChallenge(): Promise<UserChallenge | null> {
@@ -79,16 +76,34 @@ export async function getCurrentChallengeUserUploads(id: string): Promise<UserUp
     return fetchedData;
 }
 
-interface PartialUserProfile {
-    id: string
-    created_at: string;
-    updated_at: string;
-    bio: string;
-    is_admin: boolean;
-    points: number;
+export async function getUserById(id: string): Promise<UserProfile> {
+    const cached = userByIdCache.get(id);
+    if (cached) return cached;
+
+    const path: string = appendPath(USER_API_ENDPOINT, `/${id}`);
+
+    const fetchedData: UserProfile = await (await fetch(path, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${authgear.accessToken}`,
+        },
+    })).json();
+
+    userByIdCache.set(id, fetchedData);
+    return fetchedData;
 }
 
-export interface UserProfile extends UserInfo, PartialUserProfile { }
+export interface UserProfile {
+    id: string,
+    created_at: string,
+    updated_at: string,
+    bio: string,
+    is_admin: boolean,
+    points: number,
+    email: string,
+    name: string,
+    avatar_url: string,
+}
 
 export interface UserUploads {
     challenge_id: string,

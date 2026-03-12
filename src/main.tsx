@@ -1,9 +1,28 @@
 import { Routes } from "@generouted/react-router";
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "./components/ui/provider";
 import { Toaster } from "./components/ui/toaster";
 import authgear from "@authgear/web";
+
+function TokenRefresher() {
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        authgear.refreshAccessTokenIfNeeded().catch(() => {});
+      }, 500);
+    };
+    const events = ["click", "keydown", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, refresh, { passive: true }));
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, refresh));
+    };
+  }, []);
+  return null;
+}
 
 async function init(): Promise<void> {
   try {
@@ -19,6 +38,7 @@ async function init(): Promise<void> {
       <StrictMode>
         <Provider>
           <Toaster />
+          <TokenRefresher />
           <Routes />
         </Provider>
       </StrictMode>,

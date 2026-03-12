@@ -7,7 +7,7 @@ import { LuCircleUser } from "react-icons/lu";
 import { fetchUserProfile, getCurrentUserChallenge, updateBio } from "@/api/user";
 import type { UserProfile } from "@/api/user";
 import type { Challenge } from "@/api/challenge";
-import { fetchImage } from "@/api/file";
+import { fetchPublicAssets } from "@/api/file";
 import Navbar, { NAVBAR_HEIGHT } from "@/components/Navbar";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { JoinedChallengeCard } from "@/components/profile/JoinedChallengeCard";
@@ -36,12 +36,7 @@ export default function ProfilePage(): JSX.Element {
             setBioValue(prof.bio ?? "");
             ch.forEach((c) => {
                 if (!c.cover_image) return;
-                fetchImage(c.cover_image)
-                    .then((buf) => {
-                        const blob = new Blob([buf]);
-                        setChallengeCoverUrls((prev) => ({ ...prev, [c.id]: URL.createObjectURL(blob) }));
-                    })
-                    .catch(() => {});
+                setChallengeCoverUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
             });
         }).finally(() => setChecking(false));
     }, []);
@@ -56,7 +51,7 @@ export default function ProfilePage(): JSX.Element {
 
     if (!profile) return <></>;
 
-    const displayName = profile.name ?? profile.preferredUsername ?? profile.email ?? "Người dùng";
+    const displayName = profile.name ?? profile.name ?? profile.email ?? "Người dùng";
     const joinedDate = new Date(profile.created_at).toLocaleDateString("vi-VN", {
         year: "numeric",
         month: "long",

@@ -18,7 +18,7 @@ import {
 import { LuX } from "react-icons/lu";
 import { createChallenge } from "@/api/challenge";
 import type { Challenge, DTOCreateChallenge } from "@/api/challenge";
-import { fetchImage } from "@/api/file";
+import { fetchPublicAssets } from "@/api/file";
 import { toaster } from "@/components/ui/toaster";
 
 type ChallengeFormData = Omit<DTOCreateChallenge, "cover_image">;
@@ -94,11 +94,7 @@ export function CreateChallengeModal({ open, onClose, onCreated }: CreateChallen
             const created = await createChallenge(payload);
             let coverUrl: string | undefined;
             if (created.cover_image) {
-                const buf = await fetchImage(created.cover_image).catch(() => null);
-                if (buf) {
-                    const blob = new Blob([buf]);
-                    coverUrl = URL.createObjectURL(blob);
-                }
+                coverUrl = fetchPublicAssets(created.cover_image);
             }
             onCreated(created, coverUrl);
             reset();

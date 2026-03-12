@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { LuTrophy } from "react-icons/lu";
 import { getAllChallenges, withdrawChallenge, enrollChallenge, finishChallenge } from "@/api/challenge";
 import type { Challenge } from "@/api/challenge";
-import { fetchImage } from "@/api/file";
+import { fetchPublicAssets } from "@/api/file";
 import { getCurrentUserChallenge } from "@/api/user";
 import { userChallengeCache, userChallengeLinkCache, SINGLE } from "@/api/cache";
 import type { UserChallenge } from "@/api/challenge";
@@ -44,13 +44,7 @@ export default function ChallengePage(): JSX.Element {
                 const toLoad = [...data, ...joinedList];
                 toLoad.forEach((c) => {
                     if (!c.cover_image) return;
-                    fetchImage(c.cover_image)
-                        .then((buf) => {
-                            const blob = new Blob([buf]);
-                            const url = URL.createObjectURL(blob);
-                            setCoverUrls((prev) => ({ ...prev, [c.id]: url }));
-                        })
-                        .catch(() => {});
+                    setCoverUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
                 });
             })
             .finally(() => setChecking(false));

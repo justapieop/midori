@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton, Popover, Button, Image, Text, Separator } from "@chakra-ui/react";
-import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser, LuTrophy } from "react-icons/lu";
+import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser, LuTrophy, LuUsers } from "react-icons/lu";
 import authgear, { SessionState, type WebContainer, type SessionStateChangeReason } from "@authgear/web";
 import { useState, useEffect } from "react";
 import { fetchUserProfile } from "@/api/user";
@@ -30,9 +30,9 @@ export default function Navbar() {
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserProfile().then((profile) => {
-                setAvatarUrl(profile.picture);
+                setAvatarUrl(profile.avatar_url);
                 setIsAdmin(profile.is_admin);
-                setDisplayName(profile.name ?? profile.preferredUsername ?? profile.email);
+                setDisplayName(profile.name ?? profile.name ?? profile.email);
             });
         } else {
             setAvatarUrl(undefined);
@@ -104,6 +104,20 @@ export default function Navbar() {
                     >
                         <LuTrophy />
                         Thử thách
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        color="white"
+                        _hover={{ bg: "transparent" }}
+                        _active={{ bg: "transparent" }}
+                        onClick={() => window.location.href = "/community"}
+                        gap={2}
+                        display={isAuthenticated ? undefined : "none"}
+                        pointerEvents="auto"
+                    >
+                        <LuUsers />
+                        Cộng đồng
                     </Button>
                 </Flex>
 

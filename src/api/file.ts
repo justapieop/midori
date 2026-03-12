@@ -1,18 +1,13 @@
-import { appendPath, BASE_URL } from "./utils";
-import { imageCache } from "./cache";
+import { appendPath } from "./utils";
 
-const FILE_ENDPOINT: string = appendPath(BASE_URL, "/file");
+const BASE_S3_URL: string = import.meta.env.VITE_S3_ENDPOINT;
 
-export async function fetchImage(id: string): Promise<ArrayBuffer> {
-    const cached = imageCache.get(id);
-    if (cached) return cached;
+const BASE_PUBLIC_URL: string = appendPath(BASE_S3_URL, "/public");
 
-    const file: string = appendPath(FILE_ENDPOINT, `/${id}`);
+export function fetchPublicAssets(id: string): string {
+    return appendPath(BASE_PUBLIC_URL, `/${id}`);
+}
 
-    const res: ArrayBuffer = await (await fetch(file, {
-        method: "GET",
-    })).arrayBuffer();
-
-    imageCache.set(id, res);
-    return res;
+export function fetchUserAssets(userId: string, id: string): string {
+    return appendPath(BASE_S3_URL, `/${userId}/${id}`);
 }
