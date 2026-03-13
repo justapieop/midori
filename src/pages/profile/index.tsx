@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { LuCircleUser } from "react-icons/lu";
 import { fetchUserProfile, getCurrentUserChallenge, updateBio } from "@/api/user";
 import type { UserProfile } from "@/api/user";
-import type { Challenge } from "@/api/challenge";
+import type { UserChallenge } from "@/api/challenge";
 import { fetchPublicAssets } from "@/api/file";
 import Navbar, { NAVBAR_HEIGHT } from "@/components/Navbar";
 import { ProfileCard } from "@/components/profile/ProfileCard";
@@ -16,7 +16,7 @@ export default function ProfilePage(): JSX.Element {
     const navigate = useNavigate();
     const [checking, setChecking] = useState(true);
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [challenge, setChallenge] = useState<Challenge[]>([]);
+    const [challenge, setChallenge] = useState<UserChallenge[]>([]);
     const [challengeCoverUrls, setChallengeCoverUrls] = useState<Record<string, string>>({});
     const [bioEditing, setBioEditing] = useState(false);
     const [bioValue, setBioValue] = useState("");
@@ -29,12 +29,13 @@ export default function ProfilePage(): JSX.Element {
 
         Promise.all([
             fetchUserProfile(),
-            getCurrentUserChallenge().catch(() => []),
+            getCurrentUserChallenge().catch(() => null),
         ]).then(([prof, ch]) => {
             setProfile(prof);
-            setChallenge(ch);
+            const challenges = ch ? [ch] : [];
+            setChallenge(challenges);
             setBioValue(prof.bio ?? "");
-            ch.forEach((c) => {
+            challenges.forEach((c) => {
                 if (!c.cover_image) return;
                 setChallengeCoverUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
             });

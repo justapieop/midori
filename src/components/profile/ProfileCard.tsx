@@ -49,9 +49,9 @@ export function ProfileCard({
         >
             {/* Avatar + name */}
             <Flex direction="column" align="center" pt={8} pb={6} px={6} gap={3}>
-                {profile.picture ? (
+                {profile.avatar_url ? (
                     <Image
-                        src={profile.picture}
+                        src={profile.avatar_url}
                         alt={displayName}
                         boxSize="96px"
                         borderRadius="full"

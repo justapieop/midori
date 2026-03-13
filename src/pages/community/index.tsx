@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import { Box, Flex, Icon, Spinner, Text } from "@chakra-ui/react";
 import authgear, { SessionState } from "@authgear/web";
 import { useNavigate } from "react-router-dom";
-import { LuUsers } from "react-icons/lu";
+import { LuChevronLeft, LuChevronRight, LuUsers } from "react-icons/lu";
 import Navbar from "@/components/Navbar";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { getAllPosts, getPostAttachments } from "@/api/post";
@@ -26,6 +26,7 @@ export default function CommunityPage(): JSX.Element {
     const [postImages, setPostImages] = useState<Record<string, string[]>>({});
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
     const [galleryIndex, setGalleryIndex] = useState(0);
+    const [postIndex, setPostIndex] = useState(0);
 
     useEffect(() => {
         if (authgear.sessionState !== SessionState.Authenticated) {
@@ -43,6 +44,7 @@ export default function CommunityPage(): JSX.Element {
         setLoadingPosts(true);
         getAllPosts(100, 1)
             .then((data) => {
+                console.log("getAllPosts result:", data);
                 setPosts(data.posts);
                 const uniqueAuthors = [...new Set(data.posts.map((p) => p.author))];
                 Promise.all(
@@ -157,15 +159,51 @@ export default function CommunityPage(): JSX.Element {
                     </Flex>
                 ) : (
                     <Flex direction="column" gap={4}>
-                        {posts.map((post) => (
-                            <PostCard
-                                key={post.id}
-                                post={post}
-                                authorProfile={authorProfiles[post.author]}
-                                images={postImages[post.id]}
-                                onImageClick={openGallery}
-                            />
-                        ))}
+                        <PostCard
+                            post={posts[postIndex]}
+                            authorProfile={authorProfiles[posts[postIndex].author]}
+                            images={postImages[posts[postIndex].id]}
+                            onImageClick={openGallery}
+                        />
+                        <Flex align="center" justify="center" gap={3}>
+                            <Box
+                                as="button"
+                                _disabled={{ opacity: 0.4, cursor: "not-allowed" }}
+                                aria-disabled={postIndex === 0}
+                                onClick={() => { if (postIndex !== 0) setPostIndex((i) => i - 1); }}
+                                bg="white"
+                                border="1px solid"
+                                borderColor={postIndex === 0 ? "gray.200" : "green.300"}
+                                borderRadius="full"
+                                p={2}
+                                cursor={postIndex === 0 ? "not-allowed" : "pointer"}
+                                opacity={postIndex === 0 ? 0.4 : 1}
+                                _hover={postIndex === 0 ? {} : { bg: "green.50" }}
+                                transition="all 0.15s"
+                            >
+                                <Icon as={LuChevronLeft} boxSize={5} color={postIndex === 0 ? "gray.400" : "green.500"} />
+                            </Box>
+                            <Text fontSize="sm" color="gray.500" fontWeight="medium">
+                                {postIndex + 1} / {posts.length}
+                            </Text>
+                            <Box
+                                as="button"
+                                _disabled={{ opacity: 0.4, cursor: "not-allowed" }}
+                                aria-disabled={postIndex === posts.length - 1}
+                                onClick={() => { if (postIndex !== posts.length - 1) setPostIndex((i) => i + 1); }}
+                                bg="white"
+                                border="1px solid"
+                                borderColor={postIndex === posts.length - 1 ? "gray.200" : "green.300"}
+                                borderRadius="full"
+                                p={2}
+                                cursor={postIndex === posts.length - 1 ? "not-allowed" : "pointer"}
+                                opacity={postIndex === posts.length - 1 ? 0.4 : 1}
+                                _hover={postIndex === posts.length - 1 ? {} : { bg: "green.50" }}
+                                transition="all 0.15s"
+                            >
+                                <Icon as={LuChevronRight} boxSize={5} color={postIndex === posts.length - 1 ? "gray.400" : "green.500"} />
+                            </Box>
+                        </Flex>
                     </Flex>
                 )}
             </Box>
