@@ -3,6 +3,7 @@ import type { Challenge, UserChallenge, UserChallengeLink } from "./challenge";
 import type { Pin, PinType } from "./pin";
 import type { UserProfile, UserUploads } from "./user";
 import type { GetAllPostResponse, Post } from "./post";
+import type { GetAllCommentResponse } from "./comment";
 
 const TTL_SHORT: number = 2 * 60 * 1000;
 const TTL_LONG: number = 5 * 60 * 1000;
@@ -22,3 +23,5 @@ export const postsCache: LRUCache<string, GetAllPostResponse> = new LRUCache({ m
 export const postCache: LRUCache<string, Post> = new LRUCache({ max: 100, ttl: TTL_SHORT });
 export const postAttachmentsCache: LRUCache<string, string[]> = new LRUCache({ max: 100, ttl: TTL_SHORT });
 export const userByIdCache: LRUCache<string, UserProfile> = new LRUCache({ max: 50, ttl: TTL_SHORT });
+export const commentByPostId: LRUCache<string, GetAllCommentResponse> = new LRUCache({ max: 100, ttl: TTL_SHORT });
+export const replyByCommentId: LRUCache<string, GetAllCommentResponse> = new LRUCache({ max: 100, ttl: TTL_SHORT });

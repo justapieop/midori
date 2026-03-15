@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton, Popover, Button, Image, Text, Separator } from "@chakra-ui/react";
-import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser, LuTrophy, LuUsers } from "react-icons/lu";
+import { LuUser, LuLogOut, LuLogIn, LuShield, LuMap, LuCircleUser, LuTrophy, LuUsers, LuBot } from "react-icons/lu";
 import authgear, { SessionState, type WebContainer, type SessionStateChangeReason } from "@authgear/web";
 import { useState, useEffect } from "react";
 import { fetchUserProfile } from "@/api/user";
@@ -118,6 +118,20 @@ export default function Navbar() {
                     >
                         <LuUsers />
                         Cộng đồng
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        color="white"
+                        _hover={{ bg: "transparent" }}
+                        _active={{ bg: "transparent" }}
+                        onClick={() => window.location.href = "/ai"}
+                        gap={2}
+                        display={isAuthenticated ? undefined : "none"}
+                        pointerEvents="auto"
+                    >
+                        <LuBot />
+                        Trợ lý AI
                     </Button>
                 </Flex>
 

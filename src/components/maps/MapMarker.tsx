@@ -1,4 +1,4 @@
-import { Box, Image } from "@chakra-ui/react";
+import { Box, Text } from "@chakra-ui/react";
 
 interface MapMarkerProps {
   color?: string;
@@ -40,14 +40,13 @@ export default function MapMarker({ color = "#E53E3E", size = 40, iconSrc }: Map
             borderRadius="full"
             overflow="hidden"
             bg="white"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
           >
-            <Image
-              src={iconSrc}
-              alt="pin icon"
-              width="100%"
-              height="100%"
-              objectFit="cover"
-            />
+            <Text fontSize={`${iconSize * 0.7}px`} lineHeight={1}>
+              {iconSrc}
+            </Text>
           </Box>
         ) : (
           <Box

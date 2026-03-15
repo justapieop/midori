@@ -4,7 +4,7 @@ import { Box, Flex, Heading, Spinner, Text, Button, Grid, GridItem, Icon } from 
 import authgear, { SessionState } from "@authgear/web";
 import { useNavigate } from "react-router-dom";
 import { fetchUserProfile } from "@/api/user";
-import { LuArrowLeft, LuTrophy } from "react-icons/lu";
+import { LuArrowLeft, LuTrophy, LuTag } from "react-icons/lu";
 
 export default function AdminPage(): JSX.Element {
     const navigate = useNavigate();
@@ -87,6 +87,35 @@ export default function AdminPage(): JSX.Element {
                             </Flex>
                             <Text fontSize="sm" color="gray.500">
                                 Tạo, chỉnh sửa và xoá các thử thách trong hệ thống.
+                            </Text>
+                        </Box>
+                    </GridItem>
+                    <GridItem>
+                        <Box
+                            bg="white"
+                            borderRadius="xl"
+                            boxShadow="sm"
+                            border="1px solid"
+                            borderColor="gray.200"
+                            p={6}
+                            cursor="pointer"
+                            _hover={{ boxShadow: "md", borderColor: "purple.300" }}
+                            transition="all 0.15s"
+                            onClick={() => navigate("/admin/pin_types")}
+                        >
+                            <Flex align="center" gap={3} mb={3}>
+                                <Box
+                                    bg="purple.50"
+                                    borderRadius="lg"
+                                    p={2}
+                                    color="purple.600"
+                                >
+                                    <Icon as={LuTag} boxSize={5} />
+                                </Box>
+                                <Heading size="sm" color="gray.800">Quản lý loại điểm</Heading>
+                            </Flex>
+                            <Text fontSize="sm" color="gray.500">
+                                Tạo, chỉnh sửa và xoá các loại điểm trên bản đồ.
                             </Text>
                         </Box>
                     </GridItem>

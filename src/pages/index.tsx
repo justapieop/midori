@@ -12,12 +12,6 @@ import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { fetchAllPins, fetchAllPinTypes } from "@/api";
 import type { Pin as PinData, PinType } from "@/api/pin";
 
-function iconToDataUrl(icon: number[]): string {
-    const bytes = new Uint8Array(icon);
-    const blob = new Blob([bytes], { type: "image/png" });
-    return URL.createObjectURL(blob);
-}
-
 export default function Home(): JSX.Element {
     const [selectedPin, setSelectedPin] = useState<PinData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -58,7 +52,7 @@ export default function Home(): JSX.Element {
 
             const typeIconMap: Record<string, string> = {};
             for (const type of types) {
-                typeIconMap[type.id] = iconToDataUrl(type.icon);
+                typeIconMap[type.id] = type.icon;
             }
 
             for (const pin of pins) {
