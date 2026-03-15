@@ -4,14 +4,32 @@ import authgear from "@authgear/web";
 const AI_ENDPOINT: string = appendPath(BASE_URL, "/ai");
 
 export async function prompt(input: DTOAiPrompt): Promise<AiResponse> {
+    let imageEndpoint: string = appendPath(AI_ENDPOINT, "/image");
     let formData: FormData = new FormData();
 
     formData.append("prompt", input.prompt);
     formData.append("attachment", input.attachment);
 
-    let res = await authgear.fetch(AI_ENDPOINT, {
+    let res = await authgear.fetch(imageEndpoint, {
         method: "POST",
         body: formData,
+    });
+
+    if (!res.ok) {
+        throw new Error();
+    }
+
+    let data: AiResponse = await res.json();
+
+    return data;
+}
+
+
+export async function promptText(input: string): Promise<AiResponse> {
+    let textEndpoint: string = appendPath(AI_ENDPOINT, `/text?prompt=${encodeURIComponent(input)}`);
+
+    let res = await authgear.fetch(textEndpoint, {
+        method: "GET",
     });
 
     if (!res.ok) {

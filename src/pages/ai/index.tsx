@@ -9,6 +9,7 @@ import { Provider } from "@/components/ui/provider";
 import { AIHeroBanner } from "@/components/ai/AIHeroBanner";
 import { toaster } from "@/components/ui/toaster";
 import { prompt, PromptPreset } from "@/api/ai";
+import { fetchUserProfile } from "@/api/user";
 import ReactMarkdown from 'react-markdown';
 
 export default function AIPage(): JSX.Element {
@@ -18,11 +19,16 @@ export default function AIPage(): JSX.Element {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState<string | null>(null);
+    const [userPoints, setUserPoints] = useState<number>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (authgear.sessionState !== SessionState.Authenticated) {
             navigate("/");
+        } else {
+            fetchUserProfile().then(profile => {
+                setUserPoints(profile.points);
+            }).catch(console.error);
         }
     }, [navigate]);
 
@@ -47,6 +53,15 @@ export default function AIPage(): JSX.Element {
 
     const handleSubmit = async () => {
         if (!selectedFile) return;
+
+        if (userPoints <= 0) {
+            toaster.create({
+                title: "Không đủ điểm",
+                description: "Bạn cần có điểm để sử dụng tính năng này.",
+                type: "error"
+            });
+            return;
+        }
 
         setIsLoading(true);
         setAiResponse(null);
