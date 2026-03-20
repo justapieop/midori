@@ -112,7 +112,7 @@ export function AdminPinTypeCard({ type, pins, expanded, onToggleExpand, onCreat
                                 >
                                     <Icon as={LuMapPin} color="purple.500" boxSize={3} />
                                     <Box flex={1} overflow="hidden">
-                                        <Text fontSize="xs" fontWeight="medium" truncate>{pin.name}</Text>
+                                        <Text fontSize="xs" fontWeight="medium" color="gray.800" truncate>{pin.name}</Text>
                                         <Text fontSize="2xs" color="gray.500" truncate>{pin.address}</Text>
                                     </Box>
                                 </Flex>

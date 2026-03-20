@@ -40,6 +40,10 @@ export function CreatePinModal({ open, onClose, onCreated, pinType }: CreatePinM
     const [opening, setOpening] = useState("08:00");
     const [closing, setClosing] = useState("22:00");
     const [instruction, setInstruction] = useState("");
+    const [note, setNote] = useState("");
+    const [accepts, setAccepts] = useState("");
+    const [image, setImage] = useState<File | null>(null);
+    const [openingDays, setOpeningDays] = useState(0b1111111);
 
     const [errors, setErrors] = useState<Partial<Record<keyof DTOCreatePin, string>>>({});
 
@@ -53,6 +57,10 @@ export function CreatePinModal({ open, onClose, onCreated, pinType }: CreatePinM
         setOpening("08:00");
         setClosing("22:00");
         setInstruction("");
+        setNote("");
+        setAccepts("");
+        setImage(null);
+        setOpeningDays(0b1111111);
         setErrors({});
     }
 
@@ -87,7 +95,11 @@ export function CreatePinModal({ open, onClose, onCreated, pinType }: CreatePinM
             terms: terms.trim(),
             opening: parseTime(opening),
             closing: parseTime(closing),
-            instruction: instruction.trim()
+            instruction: instruction.trim(),
+            note: note.trim(),
+            accepts: accepts.trim(),
+            image: image as File,
+            opening_days: openingDays,
         };
 
         const toastId = toaster.create({ title: "Đang lưu điểm...", type: "loading" });
@@ -260,6 +272,51 @@ export function CreatePinModal({ open, onClose, onCreated, pinType }: CreatePinM
                                 </Field.Root>
 
                                 <Field.Root>
+                                    <Field.Label fontSize="sm" color="gray.700">Chấp nhận (Accepts)</Field.Label>
+                                    <Input
+                                        size="sm"
+                                        placeholder="VD: Ví điện tử, thẻ ngân hàng, tiền mặt"
+                                        value={accepts}
+                                        onChange={(e) => setAccepts(e.target.value)}
+                                        color="black"
+                                    />
+                                    <Text fontSize="xs" color="gray.400" mt={1}>Phân cách bằng dấu phẩy</Text>
+                                </Field.Root>
+
+                                <Field.Root>
+                                    <Field.Label fontSize="sm" color="gray.700">Ngày mở cửa</Field.Label>
+                                    <Flex gap={1} flexWrap="wrap">
+                                        {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label, i) => {
+                                            const isActive = (openingDays >> i) & 1;
+                                            return (
+                                                <Button
+                                                    key={label}
+                                                    size="xs"
+                                                    variant={isActive ? "solid" : "outline"}
+                                                    bg={isActive ? "green.500" : undefined}
+                                                    color={isActive ? "white" : "gray.500"}
+                                                    _hover={{ bg: isActive ? "green.600" : "gray.100" }}
+                                                    onClick={() => setOpeningDays(prev => prev ^ (1 << i))}
+                                                    minW="36px"
+                                                >
+                                                    {label}
+                                                </Button>
+                                            );
+                                        })}
+                                    </Flex>
+                                </Field.Root>
+
+                                <Field.Root>
+                                    <Field.Label fontSize="sm" color="gray.700">Ảnh bìa (Banner)</Field.Label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+                                        style={{ fontSize: "14px" }}
+                                    />
+                                </Field.Root>
+
+                                <Field.Root>
                                     <Field.Label fontSize="sm" color="gray.700">Điều khoản (Terms)</Field.Label>
                                     <Textarea
                                         size="sm"
@@ -278,6 +335,18 @@ export function CreatePinModal({ open, onClose, onCreated, pinType }: CreatePinM
                                         placeholder="Nhập hướng dẫn (nếu có)..."
                                         value={instruction}
                                         onChange={(e) => setInstruction(e.target.value)}
+                                        color="black"
+                                        rows={2}
+                                    />
+                                </Field.Root>
+
+                                <Field.Root>
+                                    <Field.Label fontSize="sm" color="gray.700">Ghi chú (Note)</Field.Label>
+                                    <Textarea
+                                        size="sm"
+                                        placeholder="Nhập ghi chú (nếu có)..."
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
                                         color="black"
                                         rows={2}
                                     />
