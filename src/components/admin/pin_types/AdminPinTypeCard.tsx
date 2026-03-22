@@ -1,6 +1,7 @@
-import { Box, Button, Flex, Icon, Text, VStack } from "@chakra-ui/react";
+import { useState } from "react";
+import { Box, Button, Dialog, Flex, Heading, Icon, IconButton, Portal, Text, VStack } from "@chakra-ui/react";
 import type { PinType, Pin as PinData } from "@/api/pin";
-import { LuTrash2, LuPencil, LuChevronDown, LuChevronUp, LuMapPin, LuPlus } from "react-icons/lu";
+import { LuTrash2, LuPencil, LuChevronDown, LuChevronUp, LuMapPin, LuPlus, LuX, LuTriangleAlert } from "react-icons/lu";
 
 interface AdminPinTypeCardProps {
     type: PinType;
@@ -8,10 +9,25 @@ interface AdminPinTypeCardProps {
     expanded: boolean;
     onToggleExpand: (id: string) => void;
     onCreatePin: (type: PinType) => void;
+    onDelete: (type: PinType) => Promise<void>;
 }
 
-export function AdminPinTypeCard({ type, pins, expanded, onToggleExpand, onCreatePin }: AdminPinTypeCardProps) {
+export function AdminPinTypeCard({ type, pins, expanded, onToggleExpand, onCreatePin, onDelete }: AdminPinTypeCardProps) {
     const typePins = pins.filter(p => p.type_id === type.id);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    async function handleConfirmDelete() {
+        setDeleting(true);
+        try {
+            await onDelete(type);
+            setConfirmOpen(false);
+        } catch {
+            // error is handled by the parent via toaster
+        } finally {
+            setDeleting(false);
+        }
+    }
 
     return (
         <Box
@@ -59,10 +75,7 @@ export function AdminPinTypeCard({ type, pins, expanded, onToggleExpand, onCreat
                     _hover={{ bg: "red.100" }}
                     flex={1}
                     gap={1}
-                    onClick={() => {
-                        // TODO: Delete pin type
-                        alert(`Delete pin type: ${type.name} - to be implemented`);
-                    }}
+                    onClick={() => setConfirmOpen(true)}
                 >
                     <Icon as={LuTrash2} boxSize={3} />
                     Xoá
@@ -125,6 +138,61 @@ export function AdminPinTypeCard({ type, pins, expanded, onToggleExpand, onCreat
                     </VStack>
                 )}
             </Box>
+
+            {/* Delete confirmation dialog */}
+            <Dialog.Root open={confirmOpen} onOpenChange={(e) => { if (!deleting) setConfirmOpen(e.open); }}>
+                <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                        <Dialog.Content borderRadius="xl" p={6} maxW="400px" w="full" bg="white" position="relative">
+                            {deleting && (
+                                <Box
+                                    position="absolute"
+                                    inset={0}
+                                    bg="whiteAlpha.700"
+                                    borderRadius="xl"
+                                    zIndex={10}
+                                    cursor="not-allowed"
+                                />
+                            )}
+                            <Flex justify="space-between" align="center" mb={4}>
+                                <Dialog.Title>
+                                    <Heading size="md" color="gray.800">Xác nhận xoá</Heading>
+                                </Dialog.Title>
+                                <Dialog.CloseTrigger asChild>
+                                    <IconButton aria-label="Đóng" variant="ghost" size="sm" disabled={deleting}>
+                                        <LuX />
+                                    </IconButton>
+                                </Dialog.CloseTrigger>
+                            </Flex>
+
+                            <Dialog.Body px={0}>
+                                <Flex align="center" gap={3} bg="red.50" p={3} borderRadius="lg" mb={3}>
+                                    <Icon as={LuTriangleAlert} color="red.500" boxSize={5} />
+                                    <Text fontSize="sm" color="red.700" fontWeight="medium">
+                                        Hành động này không thể hoàn tác!
+                                    </Text>
+                                </Flex>
+                                <Text fontSize="sm" color="gray.700">
+                                    Bạn có chắc chắn muốn xoá loại điểm <strong>"{type.name}"</strong> không?
+                                </Text>
+                                <Text fontSize="sm" color="gray.700" mt={2}>
+                                    Tất cả <strong>{typePins.length} điểm</strong> thuộc loại này cũng sẽ bị xoá vĩnh viễn.
+                                </Text>
+                            </Dialog.Body>
+
+                            <Dialog.Footer px={0} pb={0} pt={6}>
+                                <Button variant="outline" size="sm" onClick={() => setConfirmOpen(false)} disabled={deleting} color="black">
+                                    Huỷ
+                                </Button>
+                                <Button bg="red.600" color="white" _hover={{ bg: "red.700" }} size="sm" onClick={handleConfirmDelete} disabled={deleting} loading={deleting}>
+                                    Xoá loại điểm
+                                </Button>
+                            </Dialog.Footer>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
         </Box>
     );
 }

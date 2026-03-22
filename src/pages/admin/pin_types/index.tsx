@@ -5,11 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuPlus } from "react-icons/lu";
 import authgear, { SessionState } from "@authgear/web";
 import { fetchUserProfile } from "@/api/user";
-import { fetchAllPinTypes, fetchAllPins } from "@/api/pin";
+import { fetchAllPinTypes, fetchAllPins, deletePinType } from "@/api/pin";
 import type { PinType, Pin as PinData } from "@/api/pin";
 import { CreatePinTypeModal } from "@/components/admin/pin_types/CreatePinTypeModal";
 import { CreatePinModal } from "@/components/admin/pin_types/CreatePinModal";
 import { AdminPinTypeCard } from "@/components/admin/pin_types/AdminPinTypeCard";
+import { toaster } from "@/components/ui/toaster";
 
 export default function AdminPinTypesPage(): JSX.Element {
     const navigate = useNavigate();
@@ -24,6 +25,19 @@ export default function AdminPinTypesPage(): JSX.Element {
     const toggleExpand = (id: string) => {
         setExpandedTypes((prev) => ({ ...prev, [id]: !prev[id] }));
     };
+
+    async function handleDeletePinType(type: PinType): Promise<void> {
+        const toastId = toaster.create({ title: "Đang xoá loại điểm...", type: "loading" });
+        try {
+            await deletePinType(type.id);
+            setPinTypes((prev) => prev.filter((t) => t.id !== type.id));
+            setPins((prev) => prev.filter((p) => p.type_id !== type.id));
+            toaster.update(toastId, { title: `Đã xoá loại điểm "${type.name}"!`, type: "success", duration: 3000 });
+        } catch {
+            toaster.update(toastId, { title: "Xoá loại điểm thất bại.", description: "Vui lòng thử lại.", type: "error", duration: 4000 });
+            throw new Error("failed to delete");
+        }
+    }
 
     useEffect(() => {
         if (authgear.sessionState !== SessionState.Authenticated) {
@@ -110,6 +124,7 @@ export default function AdminPinTypesPage(): JSX.Element {
                                     expanded={expandedTypes[type.id] ?? false}
                                     onToggleExpand={toggleExpand}
                                     onCreatePin={setCreatePinModalType}
+                                    onDelete={handleDeletePinType}
                                 />
                             </GridItem>
                         ))}

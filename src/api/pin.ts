@@ -17,6 +17,20 @@ export async function fetchAllPins(): Promise<Pin[]> {
     return res;
 }
 
+export async function deletePinType(id: string): Promise<void> {
+    const endpoint: string = appendPath(BASE_URL, `/type/${id}`);
+    const res: Response = await authgear.fetch(endpoint, {
+        method: "DELETE",
+    });
+
+    if (!res.ok) {
+        throw new Error("failed to delete pin type");
+    }
+
+    pinsCache.clear();
+    pinTypesCache.clear();
+}
+
 export async function fetchAllPinTypes(): Promise<PinType[]> {
     const cached = pinTypesCache.get(SINGLE);
     if (cached) return cached;
