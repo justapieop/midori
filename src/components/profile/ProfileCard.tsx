@@ -77,7 +77,7 @@ export function ProfileCard({
                 <Box textAlign="center">
                     <Flex align="center" justify="center" gap={2}>
                         <Heading size="lg" color="gray.900">{displayName}</Heading>
-                        {profile.is_admin && (
+                        {profile.admin && (
                             <Flex
                                 align="center"
                                 gap={1}

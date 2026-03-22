@@ -31,7 +31,7 @@ export default function Navbar() {
         if (isAuthenticated) {
             fetchUserProfile().then((profile) => {
                 setAvatarUrl(profile.avatar_url);
-                setIsAdmin(profile.is_admin);
+                setIsAdmin(profile.admin);
                 setDisplayName(profile.name ?? profile.name ?? profile.email);
             });
         } else {

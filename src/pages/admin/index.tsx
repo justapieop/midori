@@ -18,7 +18,7 @@ export default function AdminPage(): JSX.Element {
 
         fetchUserProfile()
             .then((profile) => {
-                if (!profile.is_admin) {
+                if (!profile.admin) {
                     navigate("/");
                 } else {
                     setChecking(false);

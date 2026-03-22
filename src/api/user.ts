@@ -98,7 +98,7 @@ export interface UserProfile {
     created_at: string,
     updated_at: string,
     bio: string,
-    is_admin: boolean,
+    admin: boolean,
     points: number,
     email: string,
     name: string,
