@@ -26,6 +26,7 @@ export default function AdminChallengePage(): JSX.Element {
                     setCoverImageUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
                 });
             })
+            .catch(console.error)
             .finally(() => setLoading(false));
     }, []);
 

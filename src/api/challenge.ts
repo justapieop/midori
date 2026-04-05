@@ -9,12 +9,18 @@ export async function getAllChallenges(): Promise<Challenge[]> {
     const cached = challengesCache.get(SINGLE);
     if (cached) return cached;
 
-    const challenges: Challenge[] = await (await fetch(CHALLENGE_API_ENDPOINT, {
+    const res = await fetch(CHALLENGE_API_ENDPOINT, {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${authgear.accessToken}`,
         },
-    })).json();
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch challenges");
+    }
+
+    const challenges: Challenge[] = await res.json();
 
     challengesCache.set(SINGLE, challenges);
     return challenges;

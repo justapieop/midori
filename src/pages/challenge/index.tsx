@@ -47,6 +47,7 @@ export default function ChallengePage(): JSX.Element {
                     setCoverUrls((prev) => ({ ...prev, [c.id]: fetchPublicAssets(c.cover_image) }));
                 });
             })
+            .catch(console.error)
             .finally(() => setChecking(false));
     }, []);
 
