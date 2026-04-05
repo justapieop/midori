@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# generouted file
+src/router.ts
+
+# env file
+.env
